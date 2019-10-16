@@ -1,0 +1,19 @@
+@import "styles/reset";
+@import "styles/variables";
+@import "styles/typography";
+
+
+.wrapper {
+  padding: $baseline;
+}
+
+.content {
+  display: flex;
+  flex-direction: row;
+
+  .content-drivers,
+  .content-incidents {
+    width: 50%;
+    margin-right: $baseline*3;
+  }
+}
