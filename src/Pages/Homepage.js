@@ -7,6 +7,7 @@ class Homepage extends Component {
     this.state = {
       drivers: [],
       sessionIncidents: [],
+      // sessionContacts: [],
       dataReady: false
     }
   }
@@ -23,36 +24,54 @@ class Homepage extends Component {
       drivers: raceDrivers
     }, () => {
       this.listIncidents()
-    }
+    })
+  }
 
-
-  )
-    // {drivers.map((driver, index) => {
-    //   return <li key={index}>{driver.Name}</li>
-    // })}
+  removeDuplicatesBy(keyFn, array) {
+    //https://stackoverflow.com/questions/32238602/javascript-remove-duplicates-of-objects-sharing-same-property-value/32238794#32238794
+    var mySet = new Set();
+    return array.filter(function(x) {
+      var key = keyFn(x), isNew = !mySet.has(key);
+      if (isNew) mySet.add(key);
+      return isNew;
+    });
   }
 
   listIncidents() {
     const sessionIncidents = []
+    const sessionContacts = []
     const incidents = data.rFactorXML.RaceResults.Race.Stream.Incident
     const query = "with another vehicle"
     const filterItems = incidents.filter(inc => inc.__text.indexOf(query) !== -1)
+    const carContacts = this.removeDuplicatesBy(x => x._et, filterItems)
 
     for (const driver of this.state.drivers) {
       const result = filterItems.filter(a => a.__text.indexOf(driver) !== -1)
       sessionIncidents.push({
         name: driver,
-        contacts: result.length
+        incidents: result.length
+      })
+    }
+    for (const driver of this.state.drivers) {
+      const result2 = carContacts.filter(a => a.__text.indexOf(driver) !== -1)
+      sessionContacts.push({
+        name: driver,
+        crashes: result2.length
+      })
+    }
+
+    const merged = [];
+    for ( let i=0; i < sessionIncidents.length; i++) {
+      merged.push({
+        name:sessionIncidents[i].name,
+        incidents: sessionIncidents[i].incidents,
+        crashes: sessionContacts[i].crashes
       })
     }
     this.setState({
-      sessionIncidents: sessionIncidents,
+      sessionIncidents: merged,
       dataReady: true
     })
-
-    // filterItems.map((driver, index) => {
-    //   return <li key={index}>{driver.__text}</li>
-    // })
   }
 
   componentDidMount() {
@@ -61,52 +80,40 @@ class Homepage extends Component {
 
   render() {
     // console.log(data.rFactorXML.RaceResults)
-
     const incidents = data.rFactorXML.RaceResults.Race.Stream.Incident
     const query = "with another vehicle"
     const filterItems = incidents.filter(inc => inc.__text.indexOf(query) !== -1)
-
-    // console.log("incidents", filterItems)
 
     return (
       <div className="wrapper">
         <h1>{data.rFactorXML.RaceResults.ServerName}</h1>
         <h2>{data.rFactorXML.RaceResults.TrackVenue}</h2>
         <div className="content">
-          <div className="content-drivers">
-            <h3>Drivers</h3>
-            <ul>
-              {this.state.drivers.map((driver, index) => {
-                return <li key={index}>{driver}</li>
-              })}
-            </ul>
-          </div>
-          <div className="content-incidents">
-            <h3>Incidents</h3>
-            {this.state.dataReady ?
-              <table>
-                <thead>
-                  <tr>
-                    <th>Driver</th>
-                    <th>Contacts</th>
-                  </tr>
-                </thead>
-                <tbody>
+          <h3>Incidents</h3>
+          {this.state.dataReady ?
+            <table>
+              <thead>
+                <tr>
+                  <th>Driver</th>
+                  <th>Total incidents</th>
+                  <th>Unique contacts</th>
+                </tr>
+              </thead>
+              <tbody>
 
-                  {this.state.sessionIncidents.map((indident, index) => {
-                    return (
-                      <tr key={index}>
-                        <td>{indident.name}</td>
-                        <td>{indident.contacts}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table> :
-              <p>Loading data</p>}
-          </div>
+                {this.state.sessionIncidents.map((incident, index) => {
+                  return (
+                    <tr key={index}>
+                      <td>{incident.name}</td>
+                      <td>{incident.incidents}</td>
+                      <td>{incident.crashes}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table> :
+            <p>Loading data</p>}
         </div>
-        <hr/>
         <h3>Incidents</h3>
         <ul>
         {filterItems.map((driver, index) => {
