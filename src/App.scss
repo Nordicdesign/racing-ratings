@@ -17,3 +17,20 @@
     margin-right: $baseline*3;
   }
 }
+
+table {
+  th {
+    font-size: 1.6rem;
+    font-weight: bold;
+    text-align: left;
+    background: #f2f3f4;
+    line-height: 40px;
+    padding: 0 $baseline/2;
+  }
+  td {
+    padding: 0 $baseline/2;
+    padding-right: $baseline;
+    line-height: $baseline*1.5;
+    border: 1px solid #f2f3f4;
+  }
+}
