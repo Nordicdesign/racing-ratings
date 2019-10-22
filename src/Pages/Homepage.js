@@ -1,5 +1,35 @@
 import React, { Component } from 'react'
+import { Link } from 'react-router-dom'
 import * as data from '../data/example.json'
+import firebase from 'firebase/app'
+import 'firebase/database'
+// import 'firebase/storage'
+// import '@uppy/core/dist/style.css'
+// import '@uppy/dashboard/dist/style.css'
+// import { Dashboard } from '@uppy/react'
+// import Uppy from '@uppy/core'
+// import Tus from '@uppy/tus'
+
+// const uppy = Uppy({
+//   id: 'tus',
+//   autoProceed: true,
+//   restrictions: {
+//     maxFileSize: 100000,
+//     allowedFileTypes: ['xml']
+//   }
+// })
+// .use(Tus, {
+//   id: 'Tus',
+//   endpoint: 'http://localhost/data/', // use your tus endpoint here
+//   resume: true,
+//   autoRetry: true,
+//   retryDelays: [0, 1000, 3000, 5000]
+// })
+//
+// uppy.on('complete', result => {
+//   console.log('successful files:', result.successful)
+//   console.log('failed files:', result.failed)
+// })
 
 class Homepage extends Component {
   constructor(props,context) {
@@ -8,8 +38,60 @@ class Homepage extends Component {
       drivers: [],
       sessionIncidents: [],
       // sessionContacts: [],
-      dataReady: false
+      dataReady: false,
+      races: null,
     }
+    // this.uppy = Uppy()
+    //   .use(Dashboard, {
+    //     // id: 'Dashboard',
+    //     // trigger: '.UppyModalOpenerBtn',
+    //     inline: true,
+    //     // target: '.DashboardContainer',
+    //     // replaceTargetContent: true,
+    //     showProgressDetails: true,
+    //     note: 'Meh. ',
+    //     height: 270,
+    //     // metaFields: [
+    //     //   { id: 'name', name: 'Name', placeholder: 'file name' },
+    //     //   { id: 'caption', name: 'Caption', placeholder: 'describe what the image is about' }
+    //     // ],
+    //     browserBackButtonClose: true
+    //   }
+    // )
+    // Get a reference to the storage service, which is used to create references in your storage bucket
+    // let storage = firebase.storage();
+    //
+    // // Create a storage reference from our storage service
+    // let storageRef = storage.ref();
+  }
+
+  rateDrivers() {
+    const incidents = this.state.sessionIncidents
+    const rates = []
+    for (const driver of incidents) {
+      switch (driver.crashes) {
+        case 0:
+          rates.push({name: driver.name, ratingChange: "0.15"});
+          break;
+        case 1:
+          rates.push({name: driver.name, ratingChange: "0.05"});
+          break;
+        case 2:
+          rates.push({name: driver.name, ratingChange: "0"});
+          break;
+        case 3:
+          rates.push({name: driver.name, ratingChange: "-0.15"});
+          break;
+        case 4:
+          rates.push({name: driver.name, ratingChange: "-0.25"});
+          break;
+        default:
+          rates.push({name: driver.name, ratingChange: "-0.35"});
+      }
+    }
+
+    console.log("rate changes",rates);
+
   }
 
   listDrivers() {
@@ -71,12 +153,30 @@ class Homepage extends Component {
     this.setState({
       sessionIncidents: merged,
       dataReady: true
+    },() => {
+      this.rateDrivers()
     })
   }
 
-  componentDidMount() {
-    this.listDrivers()
+  listRaces() {
+    firebase.database().ref('/races/rf2/').on('value', function(snapshot) {
+      // check if there are any races yet
+      if (!snapshot.val()) {
+        console.log("there are no races!!! 😱");
+      } else { // some races are there
+        console.log("we got races");
+      }
+    });
   }
+
+  componentDidMount() {
+    // this.listDrivers()
+    this.listRaces()
+  }
+
+  // componentWillUnmount () {
+  //   this.uppy.close()
+  // }
 
   render() {
     // console.log(data.rFactorXML.RaceResults)
@@ -86,6 +186,16 @@ class Homepage extends Component {
 
     return (
       <div className="wrapper">
+      <h1>List of races</h1>
+      <p><Link to="/upload-race">Upload a race</Link></p>
+        <ul>
+          <li>Something</li>
+        </ul>
+          <br/>
+          <br/>
+          <br/>
+          <hr/>
+          <br/>
         <h1>{data.rFactorXML.RaceResults.ServerName}</h1>
         <h2>{data.rFactorXML.RaceResults.TrackVenue}</h2>
         <div className="content">
