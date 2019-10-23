@@ -28,6 +28,25 @@ class Uploader extends Component {
     }
   }
 
+
+  handleUpload = (e) => {
+    let file = e.target.files[0]
+    let reader = new FileReader()
+    let that = this
+    reader.readAsText(file)
+    reader.onloadend = () => {
+        var xmlData = reader.result;
+        var parseString = require('xml2js').parseString;
+        parseString(xmlData, function (err, result) {
+          console.log(result)
+          // theFile = result
+          that.setState({
+            fileContent: result
+          })
+        })
+    }
+  }
+
   parseXML() {
     var parseString = require('xml2js').parseString;
     // Create a reference from a Google Cloud Storage URI
@@ -122,6 +141,13 @@ class Uploader extends Component {
     console.log(this.state);
     return (
       <div className="wrapper">
+      <h1>Now just local</h1>
+      <form encType="multipart/form-data" method="post">
+        <input
+          type="file"
+          onChange={this.handleUpload}
+        />
+      </form>
       <h1>Upload a race</h1>
       <FileUploader
         accept=".xml"
