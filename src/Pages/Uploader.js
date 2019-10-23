@@ -24,7 +24,76 @@ class Uploader extends Component {
       file: '',
       fileURL: '',
       progress: 0,
+      fileContent: ''
     }
+  }
+
+  parseXML() {
+    var parseString = require('xml2js').parseString;
+    // Create a reference from a Google Cloud Storage URI
+    var xml = storage.refFromURL(this.state.fileURL)
+    // console.log("file name", this.state.file);
+    // let theFile = storageRef.child(this.state.file).getDownloadURL()
+      // .then(function(url) {
+
+
+      // This can be downloaded directly:
+      // var xhr = new XMLHttpRequest();
+      // xhr.responseType = 'document';
+      // xhr.onload = function(event) {
+      //   var xml = xhr.response
+      //   // return xml
+      //   // console.log(xml.response);
+      // };
+      // xhr.open('GET', url);
+      // // xhr.setRequestHeader("Content-Type", "text/xml");
+      // xhr.send();
+
+      // let theDocument = xhr.responseXML;
+      // console.log("the file?",theDocument);
+    //   if (xhr) {
+    // xhr.onreadystatechange = () => {
+    //     if (xhr.readyState === 4 && xhr.status === 200) {
+    //         let xmlDoc=xhr.responseXML;
+    //         let xmlData="";
+    //         let x=xmlDoc.getElementsByTagName("name");
+    //         for (let i=0;i<x.length;i++)
+    //         {
+    //             xmlData=xmlData + x[i].childNodes[0].nodeValue + ", ";
+    //         }
+    //         console.log("the file?",xmlData);
+    //     }
+    // }
+// }
+    // }).catch(function(error) {
+    //   // Handle any errors
+    // })
+    var xhr = new XMLHttpRequest();
+    var json_obj, status = false;
+    xhr.open("GET", this.state.fileURL, true);
+    xhr.onload = function (e) {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          // var json_obj = JSON.parse(xhr.responseText);
+          status = true;
+          this.setState({fileContent: xhr.responseText})
+          // this.setState({ json_obj },console.log("the actual file", this.state.json_obj));
+        } else {
+          console.error(xhr.statusText);
+        }
+      }
+    }.bind(this);
+    xhr.onerror = function (e) {
+      console.error(xhr.statusText);
+    };
+    xhr.send(null);
+
+
+
+    // console.log("the xml file", blob);
+    parseString(this.state.fileContent, function (err, result) {
+        console.dir(result);
+    });
   }
 
   handleUploadStart = () => {
@@ -40,14 +109,13 @@ class Uploader extends Component {
     })
     storageRef.child(filename).getDownloadURL()
       .then(url => this.setState({
-        fileURL: url
+        fileURL: url,
+        dataReady: true
       }))
   }
 
-
-
-  componentDidMount() {
-
+  componentDidUpdate() {
+    this.state.dataReady && this.parseXML()
   }
 
   render() {
