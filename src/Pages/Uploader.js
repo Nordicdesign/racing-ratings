@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import { Link } from 'react-router-dom'
 import firebase from 'firebase/app'
 import 'firebase/database'
 
@@ -277,6 +278,7 @@ class Uploader extends Component {
         <input type="submit" value="Delete" />
         </form>
         { this.state.raceExists && <p>Race already exists in the system</p>}
+        <p><Link to="/">Back to homepage</Link></p>
       </div>
     )
   }
