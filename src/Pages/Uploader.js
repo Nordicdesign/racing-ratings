@@ -101,8 +101,6 @@ class Uploader extends Component {
       //   safetyRating: 2.50,
       //   races: 0
       // })
-
-
     }
   }
 
@@ -179,10 +177,13 @@ class Uploader extends Component {
     // const incidents = data.rFactorXML.RaceResults.Race.Stream.Incident
     let incidents = this.state.fileContent.rFactorXML.RaceResults[0].Race[0].Stream[0].Incident
     incidents = Object.values(incidents)
+    // console.log("total bonkers list", incidents)
     const query = "with another vehicle"
     const filterItems = incidents.filter(inc => inc._.indexOf(query) !== -1)
-    const carContacts = this.removeDuplicatesBy(x => x._et, filterItems)
-
+    // console.log("initial filter", filterItems)
+    const carContacts = this.removeDuplicatesBy(x => x.manolo.et, filterItems)
+    // console.log("final crashes", carContacts)
+    // console.log(this.state.drivers);
     for (const driver of this.state.drivers) {
       const result = filterItems.filter(a => a._.indexOf(driver) !== -1)
       sessionIncidents.push({

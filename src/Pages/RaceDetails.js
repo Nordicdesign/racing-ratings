@@ -10,7 +10,10 @@ class RaceDetails extends Component {
       drivers: [],
       sessionIncidents: [],
       dataReady: false,
-      raceId: this.props.match.params.raceId
+      raceId: this.props.match.params.raceId,
+      race: {
+        results: []
+      }
     }
   }
 
@@ -32,6 +35,8 @@ class RaceDetails extends Component {
 
   render() {
     let race = this.state.race
+    let drivers = race.results.sort((a, b) => parseFloat(a.finish) - parseFloat(b.finish));
+    console.log(race);
     return (
       <div className="wrapper">
       <h1>Race details</h1>
@@ -41,8 +46,50 @@ class RaceDetails extends Component {
           <h2>{race.name}</h2>
           <p>{race.venue}</p>
           <h3>Drivers</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Driver</th>
+                <th>Final position</th>
+                <th>Grid</th>
+              </tr>
+            </thead>
+            <tbody>
+
+              {drivers.map((driver, index) => {
+                return (
+                  <tr key={index}>
+                    <td>{driver.name}</td>
+                    <td>{driver.finish}</td>
+                    <td>{driver.gridPosition}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
 
           <h3>Incidents</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Driver</th>
+                <th>Total incidents</th>
+                <th>Unique contacts</th>
+              </tr>
+            </thead>
+            <tbody>
+
+              {race.incidents.map((incident, index) => {
+                return (
+                  <tr key={index}>
+                    <td>{incident.name}</td>
+                    <td>{incident.incidents}</td>
+                    <td>{incident.crashes}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div> :
       <p>Loading</p>}
       </div>
