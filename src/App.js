@@ -7,7 +7,13 @@ import './App.scss'
 import * as ROUTES from './constants/routes'
 import Homepage from './Pages/Homepage'
 import Uploader from './Pages/Uploader'
-// import * as firebase from 'firebase/app'
+import * as firebase from 'firebase/app'
+// import 'firebase/database'
+import {firebaseConfig} from './constants/firebase'
+
+if(!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 // import 'firebase/analytics'
 // firebase.analytics();
 
