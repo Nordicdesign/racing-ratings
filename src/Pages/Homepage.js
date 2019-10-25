@@ -37,7 +37,8 @@ class Homepage extends Component {
   }
 
   render() {
-    const races = Object.values(this.state.races)
+    const races = Object.entries(this.state.races)
+    // const races = this.state.races
     console.log(races);
     //
     // {this.state.races.map((race, index) => {
@@ -66,9 +67,9 @@ class Homepage extends Component {
           {races.map((race, index) => {
             return (
               <tr key={index}>
-                <td>{race.name}</td>
-                <td>{race.drivers.length}</td>
-                <td>{race.incidents.length}</td>
+                <td><Link to={`/race-details/` + race[0]}>{race[1].name}</Link></td>
+                <td>{race[1].drivers.length}</td>
+                <td>{race[1].incidents.length}</td>
               </tr>
             )
           })}
