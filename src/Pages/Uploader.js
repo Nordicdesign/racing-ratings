@@ -2,21 +2,24 @@ import React, { Component } from 'react'
 import { Link } from 'react-router-dom'
 import firebase from 'firebase/app'
 import 'firebase/database'
+import { Redirect } from "react-router-dom";
+
 
 class Uploader extends Component {
   constructor(props,context) {
     super(props,context)
     this.state = {
       drivers: [],
-      // sessionIncidents: [],
-      // sessionContacts: [],
       dataReady: false,
       races: null,
       fileContent: '',
       raceExists: false,
       inputDeleteRace: '',
       ratingChanges: null,
-      results: null
+      results: null,
+      toDashboard: false,
+      raceKey: null,
+      existingDrivers: null,
     }
     this.handleChange = this.handleChange.bind(this)
     this.handleSubmit = this.handleSubmit.bind(this)
@@ -32,8 +35,8 @@ class Uploader extends Component {
     //   raceDrivers.push(driver.Name[0])
     // }
     if (this.state.races === null) {
-      let newRace = firebase.database().ref('/races/').push()
-      newRace.set({
+      let newRaceKey = firebase.database().ref('/races/').push().key
+      firebase.database().ref(`/races/${newRaceKey}/`).set({
         timestamp: result.Race[0].DateTime[0],
         name: result.ServerName[0],
         cars: result.VehiclesAllowed[0],
@@ -47,7 +50,8 @@ class Uploader extends Component {
       })
       console.log("Race created ✅");
       this.setState({
-        raceExists: false
+        raceExists: false,
+        raceKey: newRaceKey,
       })
     }
     else {
@@ -70,8 +74,8 @@ class Uploader extends Component {
       if (!raceExists) {
         // console.log("check", result.Race);
         // add it to the database
-        let newRace = firebase.database().ref('/races/').push()
-        newRace.set({
+        let newRaceKey = firebase.database().ref('/races/').push().key
+        firebase.database().ref(`/races/${newRaceKey}/`).set({
           timestamp: result.Race[0].DateTime[0],
           name: result.ServerName[0],
           cars: result.VehiclesAllowed[0],
@@ -84,9 +88,12 @@ class Uploader extends Component {
           results: this.state.results
         })
         this.setState({
-          raceExists: false
+          raceExists: false,
+          raceKey: newRaceKey,
+          toDashboard: true   // <=====================================
         }, () => {
           console.log("Race created ✅");
+          this.processDrivers()
         })
 
       }
@@ -99,7 +106,6 @@ class Uploader extends Component {
       // firstDriver.set({
       //   name: "Bob",
       //   safetyRating: 2.50,
-      //   races: 0
       // })
     }
   }
@@ -242,6 +248,11 @@ class Uploader extends Component {
       }, () => {
         console.log(that.state.races);
       })
+    })
+    firebase.database().ref('/drivers/').on('value', function(snapshot) {
+      that.setState({
+        existingDrivers: snapshot.val()
+      })
     });
   }
 
@@ -256,10 +267,66 @@ class Uploader extends Component {
 
   componentDidMount() {
     this.loadRaces()
-    // this.state.dataReady && this.parseXML()
+  }
+
+  updateDriver(name,r,k,driverKey) {
+    console.log(`found duplicate, update ${name} with race ${k} and rating ${r}`);
+
+    let driverToUpdate = {}
+    firebase.database().ref('/drivers/' + driverKey).on('value', function(snapshot) {
+      driverToUpdate = snapshot.val()
+    })
+    driverToUpdate.races.push(k)
+    let newSR = driverToUpdate.safetyRating + parseFloat(r)
+
+    firebase.database().ref('/drivers/' + driverKey).update({
+      races: driverToUpdate.races,
+      safetyRating: newSR
+    })
+  }
+
+  addDriver(name,r,k) {
+    console.log(`No duplication, add ${k} to ${name} with rating ${r}`);
+
+    // add driver
+    let newDriver = firebase.database().ref('/drivers/').push()
+    let sR = 2.50 + parseFloat(r)
+    newDriver.set({
+      name: name,
+      safetyRating: sR,
+      races: [k]
+    })
+  }
+
+  processDrivers() {
+    // loop the drivers ON THIS RACE
+    for (let driver of this.state.drivers) {
+      // is this stays as false, add the new driver, otherwise update
+      let duplicated = false
+      // get the rating change
+      let ratingChange = this.state.ratingChanges.find((d) => {
+        return d.name === driver
+      })
+      // now loop all the exiting drivers
+      let driverKey = ''
+      let existingDrivers = Object.entries(this.state.existingDrivers)
+      existingDrivers.forEach(e => {
+        if (e[1].name === driver) {
+          duplicated = true
+          driverKey = e[0]
+        }
+      })
+      // add or update it
+      duplicated ? this.updateDriver(driver,ratingChange.ratingChange,this.state.raceKey, driverKey) : this.addDriver(driver,ratingChange.ratingChange, this.state.raceKey)
+      // loop ends
+    }
   }
 
   render() {
+    if (this.state.toDashboard === true) {
+      return <Redirect to='/' />
+    }
+
     return (
       <div className="wrapper">
         <h1>Upload a file</h1>
@@ -269,6 +336,7 @@ class Uploader extends Component {
             onChange={this.handleUpload}
           />
         </form>
+        { this.state.raceExists && <p>Race already exists in the system</p>}
         <h2>Remove a race</h2>
         <form onSubmit={this.handleSubmit}>
         <input
@@ -278,7 +346,7 @@ class Uploader extends Component {
         />
         <input type="submit" value="Delete" />
         </form>
-        { this.state.raceExists && <p>Race already exists in the system</p>}
+
         <p><Link to="/">Back to homepage</Link></p>
       </div>
     )

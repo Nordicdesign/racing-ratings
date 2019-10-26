@@ -7,74 +7,94 @@ class Homepage extends Component {
   constructor(props,context) {
     super(props,context)
     this.state = {
-      drivers: [],
+      drivers: {},
       sessionIncidents: [],
       dataReady: false,
       races: {},
     }
   }
 
-  listRaces = () => {
+  loadData = () => {
     let that = this
-    firebase.database().ref('/races/').on('value', function(snapshot) {
+    firebase.database().ref('/').on('value', function(snapshot) {
       // check if there are any races yet
       if (!snapshot.val()) {
-        console.log("there are no races!!! 😱");
+        console.log("there is no data!!! 😱");
       } else { // some races are there
-        console.log("we got races");
+        let data = snapshot.val()
         that.setState({
-          races: snapshot.val(),
+          races: data.races,
+          drivers: data.drivers,
           dataReady: true
         }, () => {
-          console.log("Races are ready 🏁");
+          console.log("Data is ready 🏁");
         })
       }
     });
   }
 
   componentDidMount() {
-    this.listRaces()
+    this.loadData()
   }
 
   render() {
     const races = Object.entries(this.state.races)
-    // const races = this.state.races
-    console.log(races);
-    //
-    // {this.state.races.map((race, index) => {
-    //   return (
-    //     <tr key={index}>
-    //       <td>{race.name}</td>
-    //       <td>{race.incidents}</td>
-    //       <td>{race.crashes}</td>
-    //     </tr>
-    //   )
-    // })}
+    let drivers = Object.entries(this.state.drivers)
+    drivers = drivers.sort((a, b) => parseFloat(b[1].safetyRating) - parseFloat(a[1].safetyRating))
     return (
       <div className="wrapper">
-        <h1>List of races</h1>
-        <p><Link to="/upload-race">Upload a race</Link></p>
 
-        <table>
-          <thead>
-            <tr>
-              <th>Race</th>
-              <th>Drivers</th>
-              <th>Incidents</th>
-            </tr>
-          </thead>
-          <tbody>
-          {races.map((race, index) => {
-            return (
-              <tr key={index}>
-                <td><Link to={`/race-details/` + race[0]}>{race[1].name}</Link></td>
-                <td>{race[1].drivers.length}</td>
-                <td>{race[1].incidents.length}</td>
-              </tr>
-            )
-          })}
-          </tbody>
-        </table>
+        <h1>Exiled Drivers List</h1>
+        <p><Link to="/upload-race">Upload a race</Link></p>
+        <div className="home">
+          <div>
+            <h2>Drivers</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Races</th>
+                  <th>Safety Rating</th>
+                </tr>
+              </thead>
+              <tbody>
+              {drivers.map((driver, index) => {
+                return (
+                  <tr key={index}>
+                    <td>{driver[1].name}</td>
+                    <td>{driver[1].races.length}</td>
+                    <td>{driver[1].safetyRating.toFixed(2)}</td>
+                  </tr>
+                )
+              })}
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <h2>List of races</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Race</th>
+                  <th>Drivers</th>
+                  <th>Contacts</th>
+                </tr>
+              </thead>
+              <tbody>
+              {races.map((race, index) => {
+                return (
+                  <tr key={index}>
+                    <td><Link to={`/race-details/` + race[0]}>{race[1].name}</Link></td>
+                    <td>{race[1].drivers.length}</td>
+                    <td>{race[1].incidents.length}</td>
+                  </tr>
+                )
+              })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     )
   }
